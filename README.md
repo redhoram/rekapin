@@ -1,0 +1,86 @@
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-15-000000?logo=next.js&logoColor=white" alt="Next.js 15">
+  <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white" alt="TypeScript strict">
+  <img src="https://img.shields.io/badge/Neon-Postgres-00E599?logo=postgresql&logoColor=white" alt="Neon Postgres">
+  <img src="https://img.shields.io/badge/Built%20with-Claude%20Code-D97757" alt="Built with Claude Code">
+  <img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue.svg" alt="PolyForm Noncommercial License">
+</p>
+
+<p align="center">
+  <a href="README.md">English</a> | <a href="README.id.md">Bahasa Indonesia</a>
+</p>
+
+---
+
+# Rekapin
+
+**Upload your bank statement. Get real financial reports.**
+
+Rekapin turns raw bank statement exports (CSV/Excel) — or a simple Excel template — into cash-basis financial statements: **Profit & Loss, Cash Flow, and Cash Book**, plus a dashboard that answers the questions every small-business owner actually asks: *how much did I earn? what's my gross margin? my net margin? where did the money go?*
+
+Built for Indonesian UMKM. No accounting knowledge required — no journals, no debits and credits. Just upload.
+
+> 🚧 **Status: in development.** Features ship through the `/ship` agent pipeline — follow the commits to watch it being built.
+
+### How It Works
+
+1. **Upload** — bank statement CSV/Excel (BCA, Mandiri, BRI, BNI presets) or the standard Excel template
+2. **Map once** — column mapping wizard, saved per bank account
+3. **Review** — auto-categorization via rules engine (AI-powered in Phase 2), guaranteed deduplication
+4. **Done** — reports and margin dashboard update instantly, export to Excel
+
+### Features (MVP)
+
+- Multi-business support with strict data isolation
+- Bank statement import with per-bank presets + universal mapping wizard
+- Duplicate-proof: re-uploading the same file never doubles a transaction
+- Rules-based auto-categorization that learns from your corrections
+- Reports: Profit & Loss, Cash Flow, Cash Book — period comparison, Excel export
+- Dashboard: revenue, expenses, net profit, **gross margin, net margin**, trends, top expenses, cash position
+
+**Phase 2:** AI auto-categorization (Claude), PDF statement parsing, budget alerts, and an **AI chat** that answers questions about your finances from real database queries — bring your own key: Claude (default), Gemini, Grok, OpenAI, or OpenRouter via Vercel AI SDK.
+
+### Stack
+
+- **Next.js 15** (App Router) · TypeScript strict · Tailwind CSS + shadcn/ui · Recharts
+- **Neon Postgres** + Drizzle ORM · Better Auth · Vercel Blob
+- **Claude API** — transaction categorization · **Vercel AI SDK** — multi-provider AI chat (Phase 2)
+- Deployed on **Vercel**
+
+### Run
+
+```bash
+npm install
+npm run dev    # http://localhost:3000
+npm run build  # type check + production build
+```
+
+*(App skeleton lands with the first `/ship` run — this section goes live then.)*
+
+### The Pipeline That Builds This
+
+Every feature ships through a 5-agent pipeline (`/ship [feature]`), artifacts in [`.pipeline/`](./.pipeline):
+
+| Agent | Role |
+|-------|------|
+| `planner` | Turns the feature request into a technical spec |
+| `designer` | Design spec — guided by a bundled `premium-design` skill |
+| `coder` | Writes the code from spec + design |
+| `tester` | Runs and checks the result |
+| `reviewer` | Final verdict — SHIP / NEEDS WORK / BLOCK |
+
+See [CLAUDE.md](./CLAUDE.md) for conventions and the full flow.
+
+### Credit
+
+**Product & direction**
+- Redho Ramadhani — [linkedin.com/in/redhoramadhanihamid](https://id.linkedin.com/in/redhoramadhanihamid) · [github.com/redhoram](https://github.com/redhoram)
+
+**Built by**
+- [Claude Code](https://claude.com/claude-code) (Anthropic) running the `/ship` 5-agent pipeline
+
+Every commit carries a `Co-Authored-By` trailer — built with AI, owned by the human.
+
+### License
+
+[PolyForm Noncommercial 1.0.0](./LICENSE.md) — free for personal, internal, research, and educational use. **Commercial use requires written permission.** Keep [`NOTICE.md`](./NOTICE.md) intact.
