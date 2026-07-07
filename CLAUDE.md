@@ -25,10 +25,36 @@ Arus Kas, Buku Kas) + dashboard margin (gross/net) langsung jadi. Scope lengkap 
 - Communication language with user: Indonesian
 - Never commit `.env*` or any API key to Git
 - Multi-tenant: every query MUST filter by `business_id` — no cross-tenant data leaks
+- Two roles per business: `admin` and `staff`. Staff = data entry only (upload, transactions, categorization) — NO access to reports, dashboard, settings, or member management. Enforce role checks server-side in every endpoint/server action; hiding UI is not protection
 - All money values: integer (Rupiah, no cents) — never float
 - Accounting basis: cash basis. `TRANSFER`-type categories are excluded from P&L and margins
 - Test on localhost first before pushing to production
 - License: PolyForm Noncommercial 1.0.0 — keep `LICENSE.md`, `NOTICE.md`, and attribution footer intact
+
+## Design tokens (shared visual identity with minihire)
+
+Theme: `data-theme` attribute on `<html>` + Tailwind v4 `@custom-variant dark`.
+Dark ("night") is default; toggle in header persists via `localStorage` (key `rekapin_theme`).
+Apply saved theme in an inline `<head>` script before hydration (no theme flash) and set
+`colorScheme` — same pattern as minihire's `app/layout.tsx`.
+
+Fonts (via `next/font/google`, same as minihire):
+- **Space Grotesk** — headings/display (`--font-space-grotesk`)
+- **Inter** — body text (`--font-inter`)
+
+| Token | Night (default) | Day |
+|---|---|---|
+| `--bg` | `#0A0A0A` | `#FAF0E6` |
+| `--bg-card` | `#1A1A1A` | `#FFFFFF` |
+| `--text` | `#FAF0E6` | `#0A0A0A` |
+| `--text-muted` | `#8B7B6E` | `#7A6B5E` |
+| `--border` | `#2E2E2E` | `#D5C8B8` |
+| `--yellow` (accent) | `#F5C518` | `#F5C518` |
+| `--yellow-hover` | `#E2B400` | `#E2B400` |
+
+These hex values are fixed — do not substitute. Semantic money colors (income/expense,
+profit/loss) are not in this palette: the designer defines them to harmonize, then locks
+them as new tokens in `globals.css` and documents them here.
 
 ## /ship pipeline
 
