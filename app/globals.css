@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/* Dark ("night") mode responds to data-theme="night" on <html>. Keyed off the
+   attribute, NOT prefers-color-scheme — night is the default. */
+@custom-variant dark (&:is([data-theme="night"], [data-theme="night"] *));
+
+/* Night mode — default (no localStorage value → night) */
+:root,
+[data-theme="night"] {
+  --bg: #0a0a0a;
+  --bg-card: #1a1a1a;
+  --text: #faf0e6;
+  --text-muted: #8b7b6e;
+  --border: #2e2e2e;
+  --yellow: #f5c518;
+  --yellow-hover: #e2b400;
+}
+
+/* Day mode */
+[data-theme="day"] {
+  --bg: #faf0e6;
+  --bg-card: #ffffff;
+  --text: #0a0a0a;
+  --text-muted: #7a6b5e;
+  --border: #d5c8b8;
+  --yellow: #f5c518;
+  --yellow-hover: #e2b400;
+}
+
+/* Expose tokens to Tailwind v4 utilities (bg-*, text-*, border-*). */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-card: var(--bg-card);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-yellow: var(--yellow);
+  --color-yellow-hover: var(--yellow-hover);
+
+  --font-display: var(--font-space-grotesk);
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-inter, Arial, sans-serif);
+  /* Theme cross-fade — motion is feedback only (design §1.4). */
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+/* Space Grotesk for headings/display only. */
+.font-display {
+  font-family: var(--font-space-grotesk, sans-serif);
+}
+
+/* Derived hover/pressed washes — theme-agnostic, composed from tokens. */
+@utility hover-wash {
+  background-color: color-mix(in srgb, var(--text) 6%, transparent);
+}
+@utility pressed-wash {
+  background-color: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+/* Reduce motion — drop all transitions (design §1.4, non-negotiable). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  body {
+    transition: none !important;
+  }
+}
