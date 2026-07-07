@@ -8,6 +8,13 @@
       "when": 1783403668916,
       "tag": "0000_shiny_multiple_man",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783446309108,
+      "tag": "0001_living_harpoon",
+      "breakpoints": true
     }
   ]
 }

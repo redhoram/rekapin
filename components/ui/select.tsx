@@ -52,7 +52,8 @@ const SelectContent = React.forwardRef<
       position={position}
       className={cn(
         "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text)]",
-        "shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)]",
+        // Soft day default + strong night shadow (design §8.3 carry-forward).
+        "shadow-[0_10px_28px_-10px_rgba(10,10,10,0.14)] dark:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)]",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1",
         className,

@@ -79,19 +79,22 @@ export async function createBusiness(input: {
     };
   }
 
-  const [business] = await db
-    .insert(businesses)
-    .values({
+  // neon-http has no interactive db.transaction(), so we generate the business
+  // id in app code and submit both inserts as ONE atomic HTTP batch (all-or-
+  // nothing) instead of two sequential writes (spec "Commit strategy").
+  const businessId = crypto.randomUUID();
+  await db.batch([
+    db.insert(businesses).values({
+      id: businessId,
       name: parsed.data.name,
       businessType: parsed.data.businessType,
-    })
-    .returning({ id: businesses.id });
-
-  await db.insert(businessMembers).values({
-    businessId: business.id,
-    userId: data.user.id,
-    role: "admin", // creator becomes admin automatically
-  });
+    }),
+    db.insert(businessMembers).values({
+      businessId,
+      userId: data.user.id,
+      role: "admin", // creator becomes admin automatically
+    }),
+  ]);
 
   redirect("/onboarding/bank-account");
 }

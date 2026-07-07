@@ -28,14 +28,48 @@ export function AppShell({
   const closeDrawer = React.useCallback(() => setDrawerOpen(false), []);
 
   // Esc closes; focus moves into the drawer on open and back to the trigger on
-  // close (a11y — design §2.I).
+  // close (a11y — design §2.I). Tab/Shift+Tab wrap within the drawer so focus
+  // never escapes to the content behind it while it's open (carry-forward #2).
   React.useEffect(() => {
     if (!drawerOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setDrawerOpen(false);
+    const drawer = drawerRef.current;
+
+    const focusable = (): HTMLElement[] => {
+      if (!drawer) return [];
+      return Array.from(
+        drawer.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
     };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setDrawerOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const items = focusable();
+      if (items.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey) {
+        if (active === first || active === drawer) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
     document.addEventListener("keydown", onKey);
-    drawerRef.current?.focus();
+    drawer?.focus();
     return () => document.removeEventListener("keydown", onKey);
   }, [drawerOpen]);
 

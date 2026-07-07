@@ -15,6 +15,23 @@ export function formatRupiah(amount: number): string {
 }
 
 /**
+ * Format an ISO calendar date (yyyy-MM-dd) as a short Indonesian date, e.g.
+ * "2026-07-01" -> "1 Jul 2026". Parsed as UTC to avoid off-by-one drift. A
+ * longer ISO timestamp is accepted too (only the date part is used).
+ */
+export function formatDateShort(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(dt);
+}
+
+/**
  * Format a raw digit string with Indonesian thousand separators, e.g.
  * "5000000" -> "5.000.000". Empty input returns "".
  */

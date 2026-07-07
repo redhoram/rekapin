@@ -17,8 +17,9 @@ const DropdownMenuContent = React.forwardRef<
       sideOffset={sideOffset}
       className={cn(
         "z-50 min-w-[200px] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-1 text-[var(--text)]",
-        // The one allowed shadow — a floating layer earns elevation (design §1.3).
-        "shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)]",
+        // Floating layer earns elevation (design §1.3). Soft day default (ink at
+        // 14% reads on the light palette) + strong night shadow (design §8.3).
+        "shadow-[0_10px_28px_-10px_rgba(10,10,10,0.14)] dark:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)]",
         className,
       )}
       {...props}

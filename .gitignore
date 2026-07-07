@@ -43,6 +43,10 @@ Thumbs.db
 # Testing / coverage
 /coverage
 
+# Local upload storage (dev fallback when no Blob token) — never commit
+/.data/
+/.uploads/
+
 # Pipeline scratchpads (regenerated on each /ship).
 # Remove the line below if you want to keep spec/changelog/verdict as an audit trail.
 .pipeline/*.md

@@ -39,3 +39,12 @@ export const BANK_VALUES = BANKS.map((b) => b.value) as [string, ...string[]];
 
 /** localStorage key for the persisted theme (matches CLAUDE.md). */
 export const THEME_STORAGE_KEY = "rekapin_theme";
+
+/** Max upload size — 10 MB (spec). Enforced client-side AND server-side. */
+export const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
+
+/** Accepted upload extensions (lowercase, with dot). Validated both sides. */
+export const ACCEPTED_UPLOAD_EXTENSIONS = [".csv", ".xlsx", ".xls"] as const;
+
+/** `accept` attribute value for the dropzone file input. */
+export const UPLOAD_ACCEPT_ATTR = ACCEPTED_UPLOAD_EXTENSIONS.join(",");
