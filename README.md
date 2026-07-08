@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white" alt="TypeScript strict">
   <img src="https://img.shields.io/badge/Neon-Postgres-00E599?logo=postgresql&logoColor=white" alt="Neon Postgres">
   <img src="https://img.shields.io/badge/Built%20with-Claude%20Code-D97757" alt="Built with Claude Code">
-  <img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue.svg" alt="PolyForm Noncommercial License">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg" alt="License: AGPL v3"></a>
 </p>
 
 <p align="center">
@@ -94,4 +94,4 @@ Every commit carries a `Co-Authored-By` trailer — built with AI, owned by the 
 
 ### License
 
-[PolyForm Noncommercial 1.0.0](./LICENSE.md) — free for personal, internal, research, and educational use. **Commercial use requires written permission.** Keep [`NOTICE.md`](./NOTICE.md) intact.
+[GNU AGPL-3.0](LICENSE) — free and open source. Use it for anything, including your business. If you modify and distribute it, or run a modified version as a service, your changes must stay open source too. Keep [`NOTICE.md`](NOTICE.md) intact for attribution.

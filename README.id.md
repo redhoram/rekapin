@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white" alt="TypeScript strict">
   <img src="https://img.shields.io/badge/Neon-Postgres-00E599?logo=postgresql&logoColor=white" alt="Neon Postgres">
   <img src="https://img.shields.io/badge/Built%20with-Claude%20Code-D97757" alt="Built with Claude Code">
-  <img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue.svg" alt="PolyForm Noncommercial License">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg" alt="License: AGPL v3"></a>
 </p>
 
 <p align="center">
@@ -94,4 +94,4 @@ Setiap commit membawa trailer `Co-Authored-By` — dibangun bersama AI, dimiliki
 
 ### Lisensi
 
-[PolyForm Noncommercial 1.0.0](./LICENSE.md) — gratis untuk pemakaian pribadi, internal, riset, dan pendidikan. **Pemakaian komersial wajib izin tertulis.** Jangan hapus [`NOTICE.md`](./NOTICE.md).
+[GNU AGPL-3.0](LICENSE) — gratis dan open source. Silakan pakai untuk apa saja, termasuk untuk bisnis Anda. Jika Anda memodifikasi lalu mengedarkannya, atau menjalankan versi modifikasi sebagai layanan, perubahan Anda wajib tetap open source. Mohon biarkan [`NOTICE.md`](NOTICE.md) utuh sebagai atribusi.

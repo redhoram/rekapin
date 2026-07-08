@@ -29,7 +29,7 @@ Arus Kas, Buku Kas) + dashboard margin (gross/net) langsung jadi. Scope lengkap 
 - All money values: integer (Rupiah, no cents) — never float
 - Accounting basis: cash basis. `TRANSFER`-type categories are excluded from P&L and margins
 - Test on localhost first before pushing to production
-- License: PolyForm Noncommercial 1.0.0 — keep `LICENSE.md`, `NOTICE.md`, and attribution footer intact
+- License: GNU AGPL-3.0 — keep `LICENSE`, `NOTICE.md`, and attribution footer intact
 
 ## Design tokens (shared visual identity with minihire)
 

@@ -1,15 +1,11 @@
 # Notice
 
-Copyright (c) 2026 redhoram (https://github.com/redhoram)
+Rekapin
+Copyright (C) 2026 Redho Ramadhani (https://github.com/redhoram)
 
-This software is licensed under the PolyForm Noncommercial License 1.0.0.
-See `LICENSE.md` for the full license text.
+Original repository: https://github.com/redhoram/rekapin
 
-- Free for personal, internal, research, and educational use.
-- Commercial use of any kind (selling, hosting as a paid service, bundling
-  into a paid product) requires prior written permission from the copyright
-  holder.
-- This notice and the license file must be included with every copy or
-  substantial portion of the software.
+This program is licensed under the GNU Affero General Public License v3.0.
+See `LICENSE` for the full license text.
 
 Built by redhoram with Claude Code (Anthropic).
