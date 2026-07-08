@@ -20,7 +20,7 @@ Rekapin mengubah file export mutasi rekening (CSV/Excel) — atau template Excel
 
 Dibuat untuk UMKM Indonesia. Tanpa perlu paham akuntansi — tanpa jurnal, tanpa debit-kredit. Cukup upload.
 
-> 🚧 **Status: dalam pengembangan, belum siap production.** Langkah MVP ①–⑤ sudah SHIP (auth/onboarding, import mutasi, kategorisasi, laporan, dashboard + export Excel). Langkah ⑥ — polish dan deploy Vercel — **belum dimulai**. Gap yang diketahui sebelum production: verifikasi email masih stub console-log (belum ada provider email transaksional), dan alur undang staff (FR-1.4/U13) belum ada UI-nya. Fitur dibangun lewat pipeline agent `/ship` — ikuti commit-nya untuk melihat proses build-nya.
+> ✅ **MVP selesai — live di production.** Semua 6 langkah `/ship` sudah SHIP, termasuk deploy Vercel beneran, teruji end-to-end (daftar → verifikasi email → onboarding → upload mutasi → kategorisasi → laporan → export Excel → undang staff). Fitur dibangun lewat pipeline agent `/ship` — ikuti commit-nya untuk melihat proses build-nya.
 
 **Progress build (MVP, langkah `/ship`):**
 
@@ -31,7 +31,9 @@ Dibuat untuk UMKM Indonesia. Tanpa perlu paham akuntansi — tanpa jurnal, tanpa
 | ③ | Kategori, rules engine, transaksi | ✅ SHIP |
 | ④ | Laporan (Laba Rugi, Arus Kas, Buku Kas) | ✅ SHIP |
 | ⑤ | Dashboard, KPI margin, export Excel | ✅ SHIP |
-| ⑥ | Polish, deploy Vercel | ⏳ Belum mulai |
+| ⑥ | Polish, deploy Vercel | ✅ SHIP |
+
+Hardening pasca-MVP yang ikut dikerjakan pas langkah ⑥: upgrade keamanan dependency (better-auth, drizzle, xlsx — 0 vulnerability), email transaksional beneran via Resend, dan alur undang/kelola anggota staff lengkap (FR-1.4). Lihat [DEPLOY.md](DEPLOY.md) buat runbook deploy-nya.
 
 ### Cara Kerja
 

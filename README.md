@@ -20,7 +20,7 @@ Rekapin turns raw bank statement exports (CSV/Excel) — or a simple Excel templ
 
 Built for Indonesian UMKM. No accounting knowledge required — no journals, no debits and credits. Just upload.
 
-> 🚧 **Status: in development, not production-ready.** MVP steps ①–⑤ have shipped (auth/onboarding, statement import, categorization, reports, dashboard + Excel export). Step ⑥ — polish and Vercel deploy — has **not** started. Known pre-production gaps: email verification is a console-log stub (no transactional email provider wired yet), and the staff-invite flow (FR-1.4/U13) has no UI. Features ship through the `/ship` agent pipeline — follow the commits to watch it being built.
+> ✅ **MVP complete — live in production.** All 6 `/ship` steps have shipped, including a real Vercel deployment, verified end-to-end (signup → email verification → onboarding → statement upload → categorization → reports → Excel export → staff invite). Features ship through the `/ship` agent pipeline — follow the commits to watch it being built.
 
 **Build progress (MVP, `/ship` steps):**
 
@@ -31,7 +31,9 @@ Built for Indonesian UMKM. No accounting knowledge required — no journals, no 
 | ③ | Categories, rules engine, transactions | ✅ Shipped |
 | ④ | Reports (P&L, Cash Flow, Cash Book) | ✅ Shipped |
 | ⑤ | Dashboard, margin KPIs, Excel export | ✅ Shipped |
-| ⑥ | Polish, deploy to Vercel | ⏳ Not started |
+| ⑥ | Polish, deploy to Vercel | ✅ Shipped |
+
+Post-MVP hardening done alongside step ⑥: dependency security upgrades (better-auth, drizzle, xlsx — 0 known vulnerabilities), real transactional email via Resend, and the full staff-invite/member-management flow (FR-1.4). See [DEPLOY.md](DEPLOY.md) for the deploy runbook.
 
 ### How It Works
 
