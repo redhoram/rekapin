@@ -51,10 +51,13 @@ Fonts (via `next/font/google`, same as minihire):
 | `--border` | `#2E2E2E` | `#D5C8B8` |
 | `--yellow` (accent) | `#F5C518` | `#F5C518` |
 | `--yellow-hover` | `#E2B400` | `#E2B400` |
+| `--money-pos` (naik/laba) | `#57C08A` | `#0E7A4D` |
+| `--money-neg` (turun/rugi/saldo minus) | `#EB7A6B` | `#B33A28` |
 
-These hex values are fixed — do not substitute. Semantic money colors (income/expense,
-profit/loss) are not in this palette: the designer defines them to harmonize, then locks
-them as new tokens in `globals.css` and documents them here.
+These hex values are fixed — do not substitute. The two semantic money tokens were
+locked by the step-④ design (reports): hue is never the sole signal — a colored number
+is always co-signed by a glyph/sign (▲▼, `−`), and positive money stays grayscale by
+default (green only on increase deltas and cost-line inflow anomalies).
 
 ## /ship pipeline
 

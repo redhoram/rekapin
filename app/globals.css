@@ -14,6 +14,9 @@
   --border: #2e2e2e;
   --yellow: #f5c518;
   --yellow-hover: #e2b400;
+  /* Semantic money colors (design step ④ §2.2) — WCAG AA on --bg/--bg-card. */
+  --money-pos: #57c08a;
+  --money-neg: #eb7a6b;
 }
 
 /* Day mode */
@@ -25,6 +28,8 @@
   --border: #d5c8b8;
   --yellow: #f5c518;
   --yellow-hover: #e2b400;
+  --money-pos: #0e7a4d;
+  --money-neg: #b33a28;
 }
 
 /* Expose tokens to Tailwind v4 utilities (bg-*, text-*, border-*). */
@@ -36,6 +41,8 @@
   --color-border: var(--border);
   --color-yellow: var(--yellow);
   --color-yellow-hover: var(--yellow-hover);
+  --color-money-pos: var(--money-pos);
+  --color-money-neg: var(--money-neg);
 
   --font-display: var(--font-space-grotesk);
   --font-sans: var(--font-inter);
