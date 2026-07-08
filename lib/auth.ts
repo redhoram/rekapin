@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { db, schema } from "./db";
+import { sendEmail, emailLayout } from "./email";
 
 // Env is read lazily via process.env with fallbacks so `next build` succeeds
 // without real secrets. Better Auth only needs these values at request time.
@@ -29,11 +30,22 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
-    // STUB (spec DECISIONS #5): no real transactional email provider is wired.
-    // The verification link is logged to the server console in dev so the flow
-    // is testable locally. Swap for Resend before production.
+    // Sent via Resend when RESEND_API_KEY is set; logged to the console
+    // otherwise (lib/email.ts fallback keeps local dev fully testable).
     sendVerificationEmail: async ({ user, url }) => {
-      console.log(`[dev][email-verification] to=${user.email} url=${url}`);
+      const firstName = user.name?.split(" ")[0] || "";
+      await sendEmail({
+        to: user.email,
+        subject: "Verifikasi email kamu — Rekapin",
+        text: `Halo${firstName ? ` ${firstName}` : ""},\n\nSatu langkah lagi: verifikasi email untuk mulai pakai Rekapin.\n\n${url}\n\nAbaikan email ini kalau kamu tidak merasa mendaftar.`,
+        html: emailLayout({
+          title: "Verifikasi email kamu",
+          bodyHtml: `Halo${firstName ? ` <strong>${firstName}</strong>` : ""},<br><br>Satu langkah lagi: klik tombol di bawah untuk verifikasi email dan mulai pakai Rekapin.`,
+          ctaLabel: "Verifikasi Email",
+          ctaUrl: url,
+          footerNote: "Abaikan email ini kalau kamu tidak merasa mendaftar di Rekapin.",
+        }),
+      });
     },
   },
 
