@@ -12,11 +12,13 @@ export function AppShell({
   role,
   name,
   email,
+  needsReviewCount,
   children,
 }: {
   role: Role;
   name: string;
   email: string;
+  needsReviewCount: number;
   children: React.ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -86,7 +88,11 @@ export function AppShell({
     <div className="grid h-screen grid-cols-1 md:grid-cols-[240px_1fr]">
       {/* Desktop sidebar */}
       <aside className="hidden h-screen border-r border-[var(--border)] bg-[var(--bg-card)] md:block">
-        <SidebarNav role={role} homeHref={homeHref} />
+        <SidebarNav
+          role={role}
+          homeHref={homeHref}
+          needsReviewCount={needsReviewCount}
+        />
       </aside>
 
       {/* Content column */}
@@ -120,6 +126,7 @@ export function AppShell({
             <SidebarNav
               role={role}
               homeHref={homeHref}
+              needsReviewCount={needsReviewCount}
               onNavigate={closeDrawer}
             />
           </div>

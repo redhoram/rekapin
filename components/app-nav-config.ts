@@ -13,6 +13,8 @@ export type NavItem = {
   label: string;
   icon: LucideIcon;
   roles: Role[];
+  /** Which badge counter (if any) renders on this item. */
+  badge?: "needsReview";
 };
 
 // Nav config filtered by role in the sidebar. This is UI convenience only —
@@ -35,6 +37,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Transaksi",
     icon: ArrowLeftRight,
     roles: ["admin", "staff"],
+    badge: "needsReview",
   },
   {
     href: "/reports",

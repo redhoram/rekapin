@@ -179,6 +179,31 @@ export const reviewStatusEnum = pgEnum("review_status", [
   "needs_review",
 ]);
 
+// ---------------------------------------------------------------------------
+// Category + rules-engine enums (step ③)
+// ---------------------------------------------------------------------------
+
+/**
+ * Accounting bucket for a category. Drives P&L / margin placement in steps ④⑤.
+ * TRANSFER rows are excluded from P&L (cash-basis, CLAUDE.md).
+ */
+export const categoryTypeEnum = pgEnum("category_type", [
+  "PENDAPATAN",
+  "HPP",
+  "OPEX",
+  "NON_OPERASIONAL",
+  "TRANSFER",
+]);
+
+/** How a rule's `pattern` is compared against a transaction description. */
+export const ruleMatchTypeEnum = pgEnum("rule_match_type", ["contains", "prefix"]);
+
+/**
+ * Rule lifecycle. `active` participates in import-time matching; `pending` is a
+ * staff-proposed rule awaiting admin approval (spec "proposal mechanism").
+ */
+export const ruleStatusEnum = pgEnum("rule_status", ["active", "pending"]);
+
 export const uploads = pgTable(
   "uploads",
   {
@@ -235,9 +260,12 @@ export const transactions = pgTable(
     // Rupiah integer magnitude — always > 0; `direction` carries the sign.
     amount: integer("amount").notNull(),
     direction: directionEnum("direction").notNull(),
-    // FK constraint added in step ③; unconstrained nullable text for now
-    // (spec DECISIONS #3).
-    categoryId: text("category_id"),
+    // FK constraint added in step ③ — ON DELETE SET NULL so archiving is via a
+    // soft `archived_at` flag and hard-deleting a category (not exposed in MVP)
+    // would only null out assignments, never cascade-delete transactions.
+    categoryId: text("category_id").references(() => categories.id, {
+      onDelete: "set null",
+    }),
     dedupHash: text("dedup_hash").notNull(),
     source: sourceEnum("source").notNull().default("import"),
     reviewStatus: reviewStatusEnum("review_status")
@@ -257,6 +285,75 @@ export const transactions = pgTable(
     unique("transactions_dedup_hash_unique").on(t.businessId, t.dedupHash),
     index("transactions_business_date_idx").on(t.businessId, t.date),
     index("transactions_upload_id_idx").on(t.uploadId),
+    // Powers the needs_review badge count + the review-status filter (step ③).
+    index("transactions_business_review_status_idx").on(
+      t.businessId,
+      t.reviewStatus,
+    ),
+    // Forward-looking for step ④ P&L grouping by category.
+    index("transactions_business_category_idx").on(t.businessId, t.categoryId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Category + rules tables (step ③)
+// ---------------------------------------------------------------------------
+
+export const categories = pgTable(
+  "categories",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    businessId: text("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    type: categoryTypeEnum("type").notNull(),
+    // Marks system-seeded rows — provenance only, still editable/archivable.
+    isDefault: boolean("is_default").notNull().default(false),
+    // Soft delete: archived categories are hidden from new assignments but keep
+    // historical transactions.category_id assignments intact.
+    archivedAt: timestamp("archived_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    // Makes default-category seeding idempotent (ON CONFLICT DO NOTHING).
+    unique("categories_business_name_unique").on(t.businessId, t.name),
+    // Grouped listing in Settings + category-type filter.
+    index("categories_business_type_idx").on(t.businessId, t.type),
+  ],
+);
+
+export const categoryRules = pgTable(
+  "category_rules",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    businessId: text("business_id")
+      .notNull()
+      .references(() => businesses.id, { onDelete: "cascade" }),
+    // Matched case-insensitively against transaction descriptions.
+    pattern: text("pattern").notNull(),
+    matchType: ruleMatchTypeEnum("match_type").notNull(),
+    categoryId: text("category_id")
+      .notNull()
+      .references(() => categories.id, { onDelete: "cascade" }),
+    // Lower number = evaluated first (PRD §7).
+    priority: integer("priority").notNull(),
+    status: ruleStatusEnum("status").notNull().default("active"),
+    // Set when a staff correction creates a `pending` proposal.
+    proposedBy: text("proposed_by").references(() => user.id),
+    reviewedBy: text("reviewed_by").references(() => user.id),
+    reviewedAt: timestamp("reviewed_at"),
+    // Tie-break for equal priority (oldest rule wins).
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("category_rules_business_priority_idx").on(t.businessId, t.priority),
+    // Pending-proposal list + active-rules fetch for matching.
+    index("category_rules_business_status_idx").on(t.businessId, t.status),
   ],
 );
 
@@ -269,3 +366,7 @@ export type Upload = typeof uploads.$inferSelect;
 export type NewUpload = typeof uploads.$inferInsert;
 export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;
+export type Category = typeof categories.$inferSelect;
+export type NewCategory = typeof categories.$inferInsert;
+export type CategoryRule = typeof categoryRules.$inferSelect;
+export type NewCategoryRule = typeof categoryRules.$inferInsert;

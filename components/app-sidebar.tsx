@@ -7,15 +7,39 @@ import { navItemsForRole } from "@/components/app-nav-config";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/constants";
 
+/**
+ * Compact needs_review badge (design §6). NOT a full yellow pill: the number
+ * uses --text (yellow text fails contrast on the day palette) with a small
+ * yellow dot as the attention cue — calm in the chrome, but visible. The active
+ * nav row already carries the left yellow bar, so this stays restrained.
+ */
+function NavBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      aria-label={`${count} transaksi perlu ditinjau`}
+      className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center gap-1 rounded-full border border-[var(--border)] bg-[var(--bg)] px-1.5 text-[11px] font-semibold tabular-nums text-[var(--text)]"
+    >
+      <span
+        aria-hidden="true"
+        className="h-1.5 w-1.5 rounded-full bg-[var(--yellow)]"
+      />
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
 // Sidebar nav list — role-filtered. Used both in the fixed desktop sidebar and
 // inside the mobile drawer (onNavigate closes the drawer).
 export function SidebarNav({
   role,
   homeHref,
+  needsReviewCount,
   onNavigate,
 }: {
   role: Role;
   homeHref: string;
+  needsReviewCount: number;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
@@ -55,6 +79,9 @@ export function SidebarNav({
               )}
               <Icon size={18} strokeWidth={1.75} aria-hidden="true" />
               {item.label}
+              {item.badge === "needsReview" && (
+                <NavBadge count={needsReviewCount} />
+              )}
             </Link>
           );
         })}

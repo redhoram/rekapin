@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { auth } from "./auth";
 import { db } from "./db";
-import { businessMembers } from "./db/schema";
+import { bankAccounts, businessMembers } from "./db/schema";
 import type { Role } from "./constants";
 
 /**
@@ -67,13 +67,18 @@ export async function getActiveMembership(): Promise<{
 }
 
 /**
- * Enforce that the current request has a session, a membership, and a role in
- * `allowed`. Redirects (never renders an error page) on failure:
- *  - no session          -> /login
- *  - session, no member  -> /onboarding
- *  - role not allowed     -> /transactions (staff hitting an admin area)
+ * Enforce that the current request has a session, a membership, a role in
+ * `allowed`, and at least one bank account. Redirects (never renders an error
+ * page) on failure:
+ *  - no session               -> /login
+ *  - unverified email         -> /verify-email
+ *  - session, no member       -> /onboarding
+ *  - member, 0 bank accounts  -> /onboarding/bank-account
+ *  - role not allowed          -> /transactions (staff hitting an admin area)
  *
- * Every server action and every protected page/layout calls this.
+ * Every server action and every protected page/layout calls this — it is the ONE
+ * enforcement point, so the 0-bank-account check here protects server actions
+ * too (they never pass through app/(app)/layout.tsx).
  */
 export async function requireRole(allowed: Role[]): Promise<{
   userId: string;
@@ -92,6 +97,22 @@ export async function requireRole(allowed: Role[]): Promise<{
   const membership = await getActiveMembership();
   if (!membership) {
     redirect("/onboarding");
+  }
+
+  // Root-cause fix for the "0 bank account" onboarding escape (spec §onboarding).
+  // A user who abandons onboarding after step 1 has a valid membership but no
+  // account — the whole app is broken without one. Applied UNIFORMLY to both
+  // roles (spec DECISION #3). NOTE: a staff member in a hypothetical 0-account
+  // business would dead-end at /onboarding/bank-account (an admin-only page).
+  // That is unreachable today (no invite flow yet); revisit with a "menunggu
+  // admin menambahkan rekening" state when invitations ship.
+  const [account] = await db
+    .select({ id: bankAccounts.id })
+    .from(bankAccounts)
+    .where(eq(bankAccounts.businessId, membership.businessId))
+    .limit(1);
+  if (!account) {
+    redirect("/onboarding/bank-account");
   }
 
   if (!allowed.includes(membership.role)) {

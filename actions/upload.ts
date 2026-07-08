@@ -15,6 +15,9 @@ import { readFile } from "@/lib/parsing/read-file";
 import { detectPreset } from "@/lib/parsing/presets/registry";
 import { matchesTemplateHeaders, templateMapping } from "@/lib/parsing/template";
 import { hashRawRows, assembleResult, type PipelineResult } from "@/lib/parsing/pipeline";
+import { ensureDefaultCategories } from "@/lib/categories/seed";
+import { fetchActiveRulesForMatching } from "@/lib/rules/fetch";
+import { matchRule } from "@/lib/rules/match";
 import type {
   ColumnMapping,
   PreviewPayload,
@@ -465,23 +468,37 @@ export async function commitUpload(
     return { ok: false, error: "Gagal membaca file. Coba unggah ulang." };
   }
 
+  // Categories must exist for the post-import categorize UI (defensive; rule
+  // matching itself doesn't need them). Fetch the active, non-archived-category
+  // rule set ONCE before the insert loop — never per-row (rules tables are small).
+  await ensureDefaultCategories(businessId);
+  const activeRules = await fetchActiveRulesForMatching(businessId);
+
   let insertedCount = 0;
   const CHUNK = 500;
   for (let i = 0; i < result.insertableRows.length; i += CHUNK) {
     const slice = result.insertableRows.slice(i, i + CHUNK);
-    const values = slice.map((row) => ({
-      businessId,
-      bankAccountId: targetAccountId,
-      uploadId,
-      date: new Date(`${row.date}T00:00:00.000Z`),
-      description: row.description,
-      amount: row.amount,
-      direction: row.direction,
-      dedupHash: row.dedupHash,
-      source: "import" as const,
-      reviewStatus: "needs_review" as const,
-      createdBy: userId,
-    }));
+    const values = slice.map((row) => {
+      // Rule match → auto-categorized; no match → needs_review (untouched by a
+      // human, so its batch stays undo-eligible).
+      const match = matchRule(row.description, activeRules);
+      return {
+        businessId,
+        bankAccountId: targetAccountId,
+        uploadId,
+        date: new Date(`${row.date}T00:00:00.000Z`),
+        description: row.description,
+        amount: row.amount,
+        direction: row.direction,
+        categoryId: match?.categoryId ?? null,
+        dedupHash: row.dedupHash,
+        source: "import" as const,
+        reviewStatus: (match ? "auto" : "needs_review") as
+          | "auto"
+          | "needs_review",
+        createdBy: userId,
+      };
+    });
     const inserted = await db
       .insert(transactions)
       .values(values)

@@ -4,9 +4,15 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { businesses, businessMembers, bankAccounts } from "@/lib/db/schema";
+import {
+  businesses,
+  businessMembers,
+  bankAccounts,
+  categories,
+} from "@/lib/db/schema";
 import { getCurrentSession, getActiveMembership } from "@/lib/session";
 import { BUSINESS_TYPE_VALUES, BANK_VALUES } from "@/lib/constants";
+import { buildDefaultCategoryRows } from "@/lib/categories/seed";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -80,8 +86,10 @@ export async function createBusiness(input: {
   }
 
   // neon-http has no interactive db.transaction(), so we generate the business
-  // id in app code and submit both inserts as ONE atomic HTTP batch (all-or-
-  // nothing) instead of two sequential writes (spec "Commit strategy").
+  // id in app code and submit all inserts as ONE atomic HTTP batch (all-or-
+  // nothing) instead of sequential writes (spec "Commit strategy"). The 12
+  // default categories are seeded here so a brand-new business has them the
+  // instant onboarding step 1 commits (spec §seeding strategy #1).
   const businessId = crypto.randomUUID();
   await db.batch([
     db.insert(businesses).values({
@@ -94,6 +102,10 @@ export async function createBusiness(input: {
       userId: data.user.id,
       role: "admin", // creator becomes admin automatically
     }),
+    db
+      .insert(categories)
+      .values(buildDefaultCategoryRows(businessId))
+      .onConflictDoNothing({ target: [categories.businessId, categories.name] }),
   ]);
 
   redirect("/onboarding/bank-account");
