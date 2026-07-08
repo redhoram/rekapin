@@ -20,7 +20,18 @@ Rekapin mengubah file export mutasi rekening (CSV/Excel) — atau template Excel
 
 Dibuat untuk UMKM Indonesia. Tanpa perlu paham akuntansi — tanpa jurnal, tanpa debit-kredit. Cukup upload.
 
-> 🚧 **Status: dalam pengembangan.** Fitur dibangun lewat pipeline agent `/ship` — ikuti commit-nya untuk melihat proses build-nya.
+> 🚧 **Status: dalam pengembangan, belum siap production.** Langkah MVP ①–⑤ sudah SHIP (auth/onboarding, import mutasi, kategorisasi, laporan, dashboard + export Excel). Langkah ⑥ — polish dan deploy Vercel — **belum dimulai**. Gap yang diketahui sebelum production: verifikasi email masih stub console-log (belum ada provider email transaksional), dan alur undang staff (FR-1.4/U13) belum ada UI-nya. Fitur dibangun lewat pipeline agent `/ship` — ikuti commit-nya untuk melihat proses build-nya.
+
+**Progress build (MVP, langkah `/ship`):**
+
+| # | Langkah | Status |
+|---|---------|--------|
+| ① | Skeleton, auth, onboarding | ✅ SHIP |
+| ② | Upload mutasi, parsing, dedup | ✅ SHIP |
+| ③ | Kategori, rules engine, transaksi | ✅ SHIP |
+| ④ | Laporan (Laba Rugi, Arus Kas, Buku Kas) | ✅ SHIP |
+| ⑤ | Dashboard, KPI margin, export Excel | ✅ SHIP |
+| ⑥ | Polish, deploy Vercel | ⏳ Belum mulai |
 
 ### Cara Kerja
 
@@ -55,7 +66,7 @@ npm run dev    # http://localhost:3000
 npm run build  # type check + production build
 ```
 
-*(Skeleton aplikasi hadir di run `/ship` pertama — bagian ini aktif setelahnya.)*
+Butuh database Neon Postgres dan env var sesuai `.env.example` (`DATABASE_URL`, `BETTER_AUTH_SECRET`, key Google OAuth, token Vercel Blob opsional). Belum ada demo hosted — project ini local-dev-only sampai langkah ⑥ kelar.
 
 ### Pipeline di Balik Project Ini
 

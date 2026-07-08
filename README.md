@@ -20,7 +20,18 @@ Rekapin turns raw bank statement exports (CSV/Excel) — or a simple Excel templ
 
 Built for Indonesian UMKM. No accounting knowledge required — no journals, no debits and credits. Just upload.
 
-> 🚧 **Status: in development.** Features ship through the `/ship` agent pipeline — follow the commits to watch it being built.
+> 🚧 **Status: in development, not production-ready.** MVP steps ①–⑤ have shipped (auth/onboarding, statement import, categorization, reports, dashboard + Excel export). Step ⑥ — polish and Vercel deploy — has **not** started. Known pre-production gaps: email verification is a console-log stub (no transactional email provider wired yet), and the staff-invite flow (FR-1.4/U13) has no UI. Features ship through the `/ship` agent pipeline — follow the commits to watch it being built.
+
+**Build progress (MVP, `/ship` steps):**
+
+| # | Step | Status |
+|---|------|--------|
+| ① | Skeleton, auth, onboarding | ✅ Shipped |
+| ② | Statement upload, parsing, dedup | ✅ Shipped |
+| ③ | Categories, rules engine, transactions | ✅ Shipped |
+| ④ | Reports (P&L, Cash Flow, Cash Book) | ✅ Shipped |
+| ⑤ | Dashboard, margin KPIs, Excel export | ✅ Shipped |
+| ⑥ | Polish, deploy to Vercel | ⏳ Not started |
 
 ### How It Works
 
@@ -55,7 +66,7 @@ npm run dev    # http://localhost:3000
 npm run build  # type check + production build
 ```
 
-*(App skeleton lands with the first `/ship` run — this section goes live then.)*
+You'll need a Neon Postgres database and env vars set per `.env.example` (`DATABASE_URL`, `BETTER_AUTH_SECRET`, Google OAuth keys, optional Vercel Blob token). No hosted demo yet — this is a local-dev-only project until step ⑥.
 
 ### The Pipeline That Builds This
 
