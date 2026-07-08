@@ -4,16 +4,18 @@ import { db } from "@/lib/db";
 import { transactions } from "@/lib/db/schema";
 import { listCategories } from "@/actions/categories";
 import { listRules } from "@/actions/rules";
+import { listMembersAndInvitations } from "@/actions/members";
 import { SettingsClient } from "./_components/settings-client";
 
 // Admin-only settings console (requireRole gates it; staff redirect server-side).
-// Two panels: kelola kategori + kelola aturan (incl. pending proposals).
+// Three panels: kelola kategori + kelola aturan (incl. pending proposals) + anggota.
 export default async function SettingsPage() {
   const { businessId } = await requireRole(["admin"]);
 
-  const [categories, rulesResult, usageRows] = await Promise.all([
+  const [categories, rulesResult, members, usageRows] = await Promise.all([
     listCategories(),
     listRules(),
+    listMembersAndInvitations(),
     db
       .select({
         categoryId: transactions.categoryId,
@@ -40,6 +42,7 @@ export default async function SettingsPage() {
       categoryUsage={categoryUsage}
       rules={rulesResult.active}
       proposals={rulesResult.pending}
+      members={members}
     />
   );
 }

@@ -13,8 +13,17 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { AlertStrip } from "@/components/ui/alert-strip";
 import { FieldError } from "@/components/ui/field-error";
 import { signIn, authClient } from "@/lib/auth-client";
+import { sanitizeCallbackUrl } from "@/lib/callback-url";
 import { AuthShell, OrDivider } from "../_components/auth-shell";
 import { GoogleButton } from "../_components/google-button";
+
+/** Read + sanitize ?callbackUrl at call time (client-only; runs in handlers). */
+function currentCallbackUrl(): string {
+  if (typeof window === "undefined") return "/";
+  return sanitizeCallbackUrl(
+    new URLSearchParams(window.location.search).get("callbackUrl"),
+  );
+}
 
 const schema = z.object({
   email: z.string().min(1, "Masukkan email yang valid.").email("Masukkan email yang valid."),
@@ -43,10 +52,11 @@ export default function LoginPage() {
   const onSubmit = async (values: FormValues) => {
     setFormError(null);
     setUnverifiedEmail(null);
+    const callbackUrl = currentCallbackUrl();
     const { error } = await signIn.email({
       email: values.email,
       password: values.password,
-      callbackURL: "/",
+      callbackURL: callbackUrl,
     });
 
     if (error) {
@@ -58,14 +68,14 @@ export default function LoginPage() {
       }
       return;
     }
-    router.push("/");
+    router.push(callbackUrl);
   };
 
   const handleResend = async () => {
     if (!unverifiedEmail) return;
     await authClient.sendVerificationEmail({
       email: unverifiedEmail,
-      callbackURL: "/",
+      callbackURL: currentCallbackUrl(),
     });
     setResent(true);
   };

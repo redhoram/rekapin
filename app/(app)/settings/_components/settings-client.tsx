@@ -45,24 +45,28 @@ import {
   type ProposalDTO,
 } from "@/actions/rules";
 import type { CategoryDTO } from "@/lib/categories/types";
+import type { MembersData } from "@/actions/members";
 import { ConfirmDialog } from "./confirm-dialog";
 import { CategoryFormDialog } from "./category-form-dialog";
 import { RuleFormDialog } from "./rule-form-dialog";
+import { MembersPanel } from "./members-panel";
 
 export interface SettingsClientProps {
   categories: CategoryDTO[];
   categoryUsage: Record<string, number>;
   rules: RuleDTO[];
   proposals: ProposalDTO[];
+  members: MembersData;
 }
 
-type Tab = "kategori" | "aturan";
+type Tab = "kategori" | "aturan" | "anggota";
 
 export function SettingsClient({
   categories,
   categoryUsage,
   rules,
   proposals,
+  members,
 }: SettingsClientProps) {
   const router = useRouter();
   const [tab, setTab] = React.useState<Tab>("kategori");
@@ -97,6 +101,7 @@ export function SettingsClient({
         options={[
           { value: "kategori", label: "Kategori" },
           { value: "aturan", label: "Aturan" },
+          { value: "anggota", label: "Anggota" },
         ]}
       />
 
@@ -107,14 +112,15 @@ export function SettingsClient({
       )}
       {error && <AlertStrip>{error}</AlertStrip>}
 
-      {tab === "kategori" ? (
+      {tab === "kategori" && (
         <CategoryPanel
           categories={categories}
           categoryUsage={categoryUsage}
           onDone={done}
           onError={fail}
         />
-      ) : (
+      )}
+      {tab === "aturan" && (
         <RulesPanel
           rules={rules}
           proposals={proposals}
@@ -122,6 +128,9 @@ export function SettingsClient({
           onDone={done}
           onError={fail}
         />
+      )}
+      {tab === "anggota" && (
+        <MembersPanel data={members} onDone={done} onError={fail} />
       )}
     </div>
   );

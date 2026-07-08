@@ -13,8 +13,17 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { AlertStrip } from "@/components/ui/alert-strip";
 import { FieldError } from "@/components/ui/field-error";
 import { signUp } from "@/lib/auth-client";
+import { sanitizeCallbackUrl } from "@/lib/callback-url";
 import { AuthShell, OrDivider } from "../_components/auth-shell";
 import { GoogleButton } from "../_components/google-button";
+
+/** Read + sanitize ?callbackUrl at call time (client-only; runs in handlers). */
+function currentCallbackUrl(): string {
+  if (typeof window === "undefined") return "/";
+  return sanitizeCallbackUrl(
+    new URLSearchParams(window.location.search).get("callbackUrl"),
+  );
+}
 
 const schema = z.object({
   name: z.string().trim().min(1, "Nama tidak boleh kosong."),
@@ -44,11 +53,13 @@ export default function SignupPage() {
 
   const onSubmit = async (values: FormValues) => {
     setFormError(null);
+    // Carried through email verification so an invited user lands back on the
+    // accept page (/invite/[token]) after verifying (autoSignInAfterVerification).
     const { error } = await signUp.email({
       name: values.name,
       email: values.email,
       password: values.password,
-      callbackURL: "/",
+      callbackURL: currentCallbackUrl(),
     });
 
     if (error) {

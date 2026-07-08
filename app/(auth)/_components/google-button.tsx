@@ -4,9 +4,11 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { GoogleIcon } from "@/components/google-icon";
 import { signIn } from "@/lib/auth-client";
+import { sanitizeCallbackUrl } from "@/lib/callback-url";
 
 // Secondary full-width Google OAuth button. New Google users route into
-// onboarding via "/" (callbackURL) after Better Auth completes the flow.
+// onboarding via "/" (callbackURL) after Better Auth completes the flow — or to
+// a sanitized ?callbackUrl (e.g. an /invite/[token] accept link) when present.
 export function GoogleButton({
   label,
   onError,
@@ -18,8 +20,11 @@ export function GoogleButton({
 
   const handleClick = async () => {
     setLoading(true);
+    const callbackURL = sanitizeCallbackUrl(
+      new URLSearchParams(window.location.search).get("callbackUrl"),
+    );
     try {
-      await signIn.social({ provider: "google", callbackURL: "/" });
+      await signIn.social({ provider: "google", callbackURL });
     } catch {
       onError?.("Gagal masuk dengan Google. Coba lagi.");
       setLoading(false);
