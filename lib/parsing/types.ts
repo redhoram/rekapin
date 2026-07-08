@@ -15,6 +15,13 @@ export type DateFormat = "dd/MM/yyyy" | "yyyy-MM-dd" | "MM/dd/yyyy";
 export type Direction = "in" | "out";
 
 /**
+ * Where an upload's column mapping came from. "saved" = a per-account mapping
+ * was reused (badge in history); "wizard" = user built it manually this upload
+ * (persisted to the account only at commit, not at preview).
+ */
+export type MappingSource = "preset" | "template" | "saved" | "wizard";
+
+/**
  * A concrete column mapping. Column fields hold the ACTUAL header strings found
  * in the file (presets resolve their canonical names against real headers), so
  * normalization can look values up directly in a RawRow.

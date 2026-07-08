@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   Loader2,
   Undo2,
+  Wand2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,19 @@ function StatusChip({ status }: { status: UploadStatus }) {
         )}
       />
       {label}
+    </span>
+  );
+}
+
+/** Shown when a per-account saved mapping was reused (no wizard, no preset). */
+function SavedMappingChip() {
+  return (
+    <span
+      className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-[var(--border)] px-2 py-0.5 text-xs font-medium text-[var(--text-muted)]"
+      title="Pemetaan kolom tersimpan untuk rekening ini dipakai ulang."
+    >
+      <Wand2 size={14} strokeWidth={1.75} aria-hidden="true" />
+      Mapping tersimpan
     </span>
   );
 }
@@ -120,6 +134,7 @@ export function UploadHistory({
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              {item.mappingSource === "saved" && <SavedMappingChip />}
               <StatusChip status={item.status} />
               {canUndo && (
                 <>

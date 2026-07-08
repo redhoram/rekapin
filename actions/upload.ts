@@ -20,6 +20,7 @@ import { fetchActiveRulesForMatching } from "@/lib/rules/fetch";
 import { matchRule } from "@/lib/rules/match";
 import type {
   ColumnMapping,
+  MappingSource,
   PreviewPayload,
   RawRow,
 } from "@/lib/parsing/types";
@@ -69,6 +70,8 @@ export interface UploadHistoryItem {
   bankLabel: string | null;
   bankCode: string | null;
   hasEditedRows: boolean;
+  /** "saved" renders the mapping-reuse badge; null on pre-existing rows. */
+  mappingSource: MappingSource | null;
 }
 
 export interface ListUploadsResult {
@@ -290,15 +293,19 @@ export async function parseUpload(formData: FormData): Promise<ParseUploadResult
   const preset = detectPreset(headers);
   let mapping: ColumnMapping | null = null;
   let presetUsed: string | null = null;
+  let mappingSource: MappingSource | null = null;
   let usedManualMapping = false;
 
   if (preset) {
     mapping = preset.resolveMapping(headers);
     presetUsed = preset.code;
+    mappingSource = "preset";
   } else if (matchesTemplateHeaders(headers)) {
     mapping = templateMapping(headers);
+    mappingSource = "template";
   } else if (account.savedColumnMapping) {
     mapping = account.savedColumnMapping;
+    mappingSource = "saved";
   }
 
   if (!mapping) {
@@ -326,6 +333,7 @@ export async function parseUpload(formData: FormData): Promise<ParseUploadResult
       status: "parsed",
       columnMapping: mapping,
       presetUsed,
+      mappingSource,
       rowCount: result.rowCount,
       skippedDupeCount: result.duplicateCount,
       failedRowCount: result.failedCount,
@@ -347,8 +355,8 @@ export async function parseUpload(formData: FormData): Promise<ParseUploadResult
 
 /**
  * Re-normalize a stored upload with a wizard-built mapping (server is the source
- * of truth — client-normalized rows are never trusted). Persists the mapping to
- * the account so future uploads skip the wizard. admin + staff.
+ * of truth — client-normalized rows are never trusted). The mapping is snapshotted
+ * on the upload; it is persisted to the account at commit time. admin + staff.
  */
 export async function applyMapping(
   uploadId: string,
@@ -389,12 +397,9 @@ export async function applyMapping(
     return { status: "error", message: "Gagal membaca file. Coba unggah ulang." };
   }
 
-  // Persist the mapping per account + snapshot on the upload.
-  await db
-    .update(bankAccounts)
-    .set({ savedColumnMapping: mapping })
-    .where(and(eq(bankAccounts.id, bankAccountId), eq(bankAccounts.businessId, businessId)));
-
+  // Snapshot the mapping on the upload only. Persisting it to the account
+  // happens at commit — an abandoned preview must not overwrite a mapping
+  // that already works for this account.
   await db
     .update(uploads)
     .set({
@@ -402,6 +407,7 @@ export async function applyMapping(
       bankAccountId,
       columnMapping: mapping,
       presetUsed: null,
+      mappingSource: "wizard",
       rowCount: result.rowCount,
       skippedDupeCount: result.duplicateCount,
       failedRowCount: result.failedCount,
@@ -509,6 +515,17 @@ export async function commitUpload(
     insertedCount += inserted.length;
   }
 
+  // A wizard-built mapping proved itself by reaching commit — NOW persist it to
+  // the account so future uploads skip the wizard (abandoned previews never do).
+  if (upload.mappingSource === "wizard") {
+    await db
+      .update(bankAccounts)
+      .set({ savedColumnMapping: upload.columnMapping })
+      .where(
+        and(eq(bankAccounts.id, targetAccountId), eq(bankAccounts.businessId, businessId)),
+      );
+  }
+
   await db
     .update(uploads)
     .set({
@@ -596,6 +613,7 @@ export async function listUploads(): Promise<ListUploadsResult> {
       bankAccountId: uploads.bankAccountId,
       bankLabel: bankAccounts.label,
       bankCode: bankAccounts.bankCode,
+      mappingSource: uploads.mappingSource,
     })
     .from(uploads)
     .leftJoin(bankAccounts, eq(uploads.bankAccountId, bankAccounts.id))
@@ -633,6 +651,7 @@ export async function listUploads(): Promise<ListUploadsResult> {
       bankLabel: r.bankLabel,
       bankCode: r.bankCode,
       hasEditedRows: (counts?.edited ?? 0) > 0,
+      mappingSource: r.mappingSource,
     };
   });
 
