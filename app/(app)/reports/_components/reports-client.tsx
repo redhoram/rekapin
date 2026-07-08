@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { ReportTab } from "@/lib/reports/types";
 import { FinalBadge } from "./final-badge";
+import { ExportButton } from "./export-button";
 import { ReportTabs } from "./report-tabs";
 import { PeriodPicker } from "./period-picker";
 import { ReportEmpty } from "./report-empty";
@@ -81,6 +82,14 @@ export function ReportsClient(props: ReportsClientProps) {
     profitLoss.uncategorized.count === 0;
   const cashFlowNoAccounts = cashFlow !== null && cashFlow.accounts.length === 0;
 
+  // Export is disabled (visually, not hidden) when the active tab has nothing to
+  // export for the period — same emptiness checks the views already use (§5).
+  const exportDisabled =
+    !hasAnyTransaction ||
+    (tab === "laba-rugi" && profitLossEmpty) ||
+    (tab === "arus-kas" && cashFlowNoAccounts) ||
+    (tab === "buku-kas" && (cashBook === null || cashBook.rows.length === 0));
+
   let view: React.ReactNode = null;
   if (!hasAnyTransaction) {
     view = <ReportEmpty variant="new" />;
@@ -121,7 +130,10 @@ export function ReportsClient(props: ReportsClientProps) {
           </h1>
           <p className="mt-1 text-sm text-[var(--text-muted)]">{subtitle}</p>
         </div>
-        {hasUnreviewed && <FinalBadge />}
+        <div className="flex flex-wrap items-center gap-2">
+          {hasUnreviewed && <FinalBadge />}
+          <ExportButton tab={tab} disabled={exportDisabled} />
+        </div>
       </div>
 
       <ReportTabs tab={tab} onChange={(v: ReportTab) => pushParams({ tab: v })} />

@@ -3,6 +3,7 @@ import {
   computeChangePct,
   previousPeriod,
   resolvePeriod,
+  trailingMonths,
   wibTodayIso,
 } from "@/lib/reports/period";
 
@@ -159,6 +160,30 @@ describe("previousPeriod", () => {
     // 7 days ending 2024-02-29 (leap day).
     expect(p.start).toBe("2024-02-23");
     expect(p.end).toBe("2024-02-29");
+  });
+});
+
+describe("trailingMonths", () => {
+  it("returns exactly `count` months, oldest -> newest, ending at the anchor month", () => {
+    const months = trailingMonths("2026-07-15", 12);
+    expect(months).toHaveLength(12);
+    expect(months[0].ym).toBe("2025-08");
+    expect(months[0].label).toBe("Agu 2025");
+    expect(months[11].ym).toBe("2026-07");
+    expect(months[11].label).toBe("Jul 2026");
+  });
+
+  it("computes correct month start/end incl. a leap February", () => {
+    const months = trailingMonths("2024-03-31", 3);
+    expect(months.map((m) => m.ym)).toEqual(["2024-01", "2024-02", "2024-03"]);
+    expect(months[1].start).toBe("2024-02-01");
+    expect(months[1].end).toBe("2024-02-29"); // leap day
+  });
+
+  it("crosses a year boundary correctly", () => {
+    const months = trailingMonths("2026-01-31", 3);
+    expect(months.map((m) => m.ym)).toEqual(["2025-11", "2025-12", "2026-01"]);
+    expect(months[0].label).toBe("Nov 2025");
   });
 });
 

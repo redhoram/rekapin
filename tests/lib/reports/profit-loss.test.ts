@@ -30,6 +30,7 @@ function makeInput(
     previous,
     uncategorized: { count: 0, netAmount: 0 },
     hasUnreviewed: false,
+    needsReviewCount: 0,
     ...extra,
   };
 }

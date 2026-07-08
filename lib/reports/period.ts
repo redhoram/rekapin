@@ -1,5 +1,5 @@
 import { formatDateShort } from "@/lib/utils";
-import type { PeriodPreset, ResolvedPeriod } from "./types";
+import type { PeriodPreset, ResolvedPeriod, TrendMonth } from "./types";
 
 /**
  * Pure period-resolution layer (no DB import) for /reports. Same "never throws,
@@ -32,6 +32,21 @@ const MONTHS_ID = [
   "Oktober",
   "November",
   "Desember",
+];
+
+const MONTHS_ID_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mei",
+  "Jun",
+  "Jul",
+  "Agu",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Des",
 ];
 
 const PRESETS: PeriodPreset[] = ["month", "quarter", "year", "custom"];
@@ -235,4 +250,30 @@ export function computeChangePct(
 /** Convenience: wrap current/previous into a MoneyDelta with a computed %. */
 export function toMoneyDelta(current: number, previous: number) {
   return { current, previous, changePct: computeChangePct(current, previous) };
+}
+
+/**
+ * The trailing `count` calendar months ending at the month that contains
+ * `anchorIso` (yyyy-MM-dd), returned oldest -> newest. Pure, no DB — the same
+ * UTC month-rollover math as the private period builders. Used by the dashboard
+ * 12-month trend/margin charts; a business younger than `count` months simply
+ * gets zero-filled early buckets downstream (assembleMonthlyTrend).
+ */
+export function trailingMonths(anchorIso: string, count: number): TrendMonth[] {
+  const anchorYear = Number(anchorIso.slice(0, 4));
+  const anchorMonth = Number(anchorIso.slice(5, 7)); // 1-12
+  const months: TrendMonth[] = [];
+  for (let i = count - 1; i >= 0; i--) {
+    // Zero-based month arithmetic handles year rollover cleanly.
+    const idx = anchorYear * 12 + (anchorMonth - 1) - i;
+    const y = Math.floor(idx / 12);
+    const m = (idx % 12) + 1; // 1-12
+    months.push({
+      ym: `${y}-${pad2(m)}`,
+      start: ymd(y, m, 1),
+      end: ymd(y, m, lastDayOfMonth(y, m)),
+      label: `${MONTHS_ID_SHORT[m - 1]} ${y}`,
+    });
+  }
+  return months;
 }

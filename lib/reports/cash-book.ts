@@ -6,6 +6,10 @@ import type { CashBookPage, CashBookRow, LedgerMergeRow, ResolvedPeriod } from "
 /** Ledger page size — denser than the transactions table (spec §Buku Kas). */
 export const BUKU_KAS_PAGE_SIZE = 50;
 
+/** Export page size — one "page" large enough to hold every row in a period,
+ *  so the Buku Kas export reuses fetchCashBook instead of a parallel fetch-all. */
+export const BUKU_KAS_EXPORT_PAGE_SIZE = 100_000;
+
 const UNCATEGORIZED_LABEL = "Belum terkategorisasi";
 
 /**
@@ -143,6 +147,7 @@ export async function fetchCashBook(
   period: ResolvedPeriod,
   accountId: string | "combined",
   page: number,
+  pageSize: number = BUKU_KAS_PAGE_SIZE,
 ): Promise<CashBookPage> {
   const accountRows: AccountRow[] = await db
     .select({
@@ -198,7 +203,7 @@ export async function fetchCashBook(
       .from(transactions)
       .where(where);
     const totalRows = Number(count) || 0;
-    const totalPages = Math.max(1, Math.ceil(totalRows / BUKU_KAS_PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
     const safePage = Math.min(Math.max(1, page), totalPages);
 
     // Window runs over the FULL filtered set before LIMIT/OFFSET (SQL window
@@ -212,8 +217,8 @@ export async function fetchCashBook(
       .leftJoin(categories, eq(categories.id, transactions.categoryId))
       .where(where)
       .orderBy(asc(transactions.date), asc(transactions.createdAt), asc(transactions.id))
-      .limit(BUKU_KAS_PAGE_SIZE)
-      .offset((safePage - 1) * BUKU_KAS_PAGE_SIZE);
+      .limit(pageSize)
+      .offset((safePage - 1) * pageSize);
 
     return {
       period,
@@ -224,7 +229,7 @@ export async function fetchCashBook(
         toCashBookRow(r, openingBalance + Number(r.cumFlow), accountsById),
       ),
       page: safePage,
-      pageSize: BUKU_KAS_PAGE_SIZE,
+      pageSize,
       totalRows,
       totalPages,
       hasUnreviewed,
@@ -265,11 +270,11 @@ export async function fetchCashBook(
   );
 
   const totalRows = merged.length;
-  const totalPages = Math.max(1, Math.ceil(totalRows / BUKU_KAS_PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
   const safePage = Math.min(Math.max(1, page), totalPages);
   const pageRows = merged.slice(
-    (safePage - 1) * BUKU_KAS_PAGE_SIZE,
-    safePage * BUKU_KAS_PAGE_SIZE,
+    (safePage - 1) * pageSize,
+    safePage * pageSize,
   );
 
   return {
@@ -287,7 +292,7 @@ export async function fetchCashBook(
       ),
     ),
     page: safePage,
-    pageSize: BUKU_KAS_PAGE_SIZE,
+    pageSize,
     totalRows,
     totalPages,
     hasUnreviewed,

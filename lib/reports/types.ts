@@ -57,6 +57,9 @@ export interface ProfitLossReport {
   netProfit: MoneyDelta;
   uncategorized: { count: number; netAmount: number };
   hasUnreviewed: boolean;
+  /** In-period needs_review transaction count backing `hasUnreviewed`. The
+   *  dashboard CTA needs the actual number ("N transaksi perlu ditinjau"). */
+  needsReviewCount: number;
 }
 
 export interface CashFlowAccountSection {
@@ -133,6 +136,8 @@ export interface AssembleProfitLossInput {
   previous: ProfitLossCategoryRow[];
   uncategorized: { count: number; netAmount: number };
   hasUnreviewed: boolean;
+  /** In-period needs_review count (backs both `hasUnreviewed` and the report). */
+  needsReviewCount: number;
 }
 
 /** A single cash movement for one account — input to resolveAccountSection. */
@@ -173,4 +178,64 @@ export interface LedgerMergeRow {
   createdAt: string; // ISO timestamp — chronological tie-break
   id: string; // final deterministic tie-break
   signedAmount: number; // +in / -out
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard DTOs (step ⑤). All JSON-safe (no Date), same as the report DTOs.
+// ---------------------------------------------------------------------------
+
+/** One trailing month window, oldest -> newest — output of trailingMonths. */
+export interface TrendMonth {
+  ym: string; // "yyyy-MM"
+  start: string; // yyyy-MM-dd, first day of month
+  end: string; // yyyy-MM-dd, last day of month
+  label: string; // short Indonesian label, e.g. "Jul 2026"
+}
+
+/** Percentage-point delta (margins) — NOT a MoneyDelta (no Rupiah, no "Baru"). */
+export interface PercentPointDelta {
+  current: number | null; // null when current-period revenue <= 0 (undefined margin)
+  previous: number | null; // null when previous-period revenue <= 0
+  changePts: number | null; // current - previous, 1 decimal; null unless both non-null
+}
+
+export interface DashboardKpis {
+  period: ResolvedPeriod;
+  previousPeriod: ResolvedPeriod;
+  revenue: MoneyDelta;
+  totalExpense: MoneyDelta; // HPP + OPEX cost magnitude, combined
+  netProfit: MoneyDelta;
+  grossMarginPct: PercentPointDelta;
+  netMarginPct: PercentPointDelta;
+  cashPosition: MoneyDelta; // combined closing balance AT PERIOD END
+  hasUnreviewed: boolean;
+  needsReviewCount: number;
+  uncategorizedCount: number;
+}
+
+export interface ExpenseCompositionSlice {
+  categoryId: string | null; // null = the synthetic "Lainnya" bucket
+  categoryName: string;
+  total: number; // integer Rupiah, positive cost magnitude
+  percentOfTotal: number | null; // null when total expense === 0
+}
+
+export interface ExpenseComposition {
+  period: ResolvedPeriod;
+  slices: ExpenseCompositionSlice[]; // <= 6 entries: up to 5 categories + "Lainnya"
+  total: number;
+}
+
+export interface MonthlyTrendPoint {
+  month: string; // "yyyy-MM"
+  label: string; // "Jul 2026"
+  revenue: number; // integer Rupiah
+  expense: number; // integer Rupiah, HPP+OPEX magnitude (>= 0 in the normal case)
+  profit: number; // integer Rupiah, net profit incl. NON_OPERASIONAL (can be negative)
+  grossMarginPct: number | null; // null when revenue <= 0 that month
+  netMarginPct: number | null; // null when revenue <= 0 that month
+}
+
+export interface DashboardTrend {
+  months: MonthlyTrendPoint[]; // chronological, oldest -> newest, length === requested count
 }

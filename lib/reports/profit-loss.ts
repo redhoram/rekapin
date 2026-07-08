@@ -126,6 +126,7 @@ export function assembleProfitLoss(
     netProfit: toMoneyDelta(netCur, netPrev),
     uncategorized: input.uncategorized,
     hasUnreviewed: input.hasUnreviewed,
+    needsReviewCount: input.needsReviewCount,
   };
 }
 
@@ -199,6 +200,7 @@ export async function fetchProfitLoss(
     ]);
 
   const uncat = uncatRows[0] ?? { count: 0, netAmount: 0 };
+  const needsReviewCount = Number(unreviewedRows[0]?.count) || 0;
 
   return assembleProfitLoss({
     period,
@@ -219,6 +221,7 @@ export async function fetchProfitLoss(
       count: Number(uncat.count) || 0,
       netAmount: Number(uncat.netAmount) || 0,
     },
-    hasUnreviewed: (Number(unreviewedRows[0]?.count) || 0) > 0,
+    hasUnreviewed: needsReviewCount > 0,
+    needsReviewCount,
   });
 }

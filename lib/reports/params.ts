@@ -48,3 +48,26 @@ export function parseReportParams(
     },
   };
 }
+
+export interface DashboardParams {
+  periodParams: PeriodParams;
+}
+
+/**
+ * Parse raw /dashboard URL searchParams. Same "never throws, garbage -> default"
+ * contract as parseReportParams, minus tab/account/page (the dashboard has none).
+ */
+export function parseDashboardParams(
+  sp: Record<string, string | string[] | undefined>,
+): DashboardParams {
+  return {
+    periodParams: {
+      preset: firstValue(sp.preset),
+      year: firstValue(sp.year),
+      month: firstValue(sp.month),
+      quarter: firstValue(sp.quarter),
+      from: firstValue(sp.from),
+      to: firstValue(sp.to),
+    },
+  };
+}

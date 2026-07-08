@@ -32,6 +32,26 @@ export function formatDateShort(iso: string): string {
 }
 
 /**
+ * Compact Indonesian magnitude abbreviation for chart axis ticks + bar-end
+ * labels (design §4.4). No "Rp" prefix (the tooltip carries the full value):
+ *   1_200_000_000 -> "1,2 M"   (miliar)
+ *      12_500_000 -> "12,5 jt" (juta)
+ *          45_000 -> "45 rb"   (ribu)
+ *             500 -> "500"
+ * Negative values are prefixed with U+2212 (real minus, never a hyphen).
+ */
+export function formatRupiahShort(n: number): string {
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "−" : "";
+  const fmt = (v: number) =>
+    new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 }).format(v);
+  if (abs >= 1e9) return `${sign}${fmt(abs / 1e9)} M`;
+  if (abs >= 1e6) return `${sign}${fmt(abs / 1e6)} jt`;
+  if (abs >= 1e3) return `${sign}${fmt(abs / 1e3)} rb`;
+  return `${sign}${fmt(abs)}`;
+}
+
+/**
  * Format a raw digit string with Indonesian thousand separators, e.g.
  * "5000000" -> "5.000.000". Empty input returns "".
  */
