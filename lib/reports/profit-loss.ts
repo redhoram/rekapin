@@ -130,8 +130,12 @@ export function assembleProfitLoss(
   };
 }
 
-/** SUM(signedAmount) — +in / -out — cast to int (spec: int4 range at MVP scale). */
-const signedSum = sql<number>`coalesce(sum(case when ${transactions.direction} = 'in' then ${transactions.amount} else -${transactions.amount} end), 0)::int`;
+/**
+ * SUM(signedAmount) — +in / -out. Cast to bigint (a period sum easily exceeds
+ * the int4 max of ~Rp 2.1B); neon returns bigint as a string, so mapWith(Number)
+ * coerces it back — exact for any Rupiah total under 2^53.
+ */
+const signedSum = sql<number>`coalesce(sum(case when ${transactions.direction} = 'in' then ${transactions.amount} else -${transactions.amount} end), 0)::bigint`.mapWith(Number);
 
 /**
  * Fetch the Laba Rugi report for a period + its previous-period comparison.

@@ -218,8 +218,8 @@ export function assembleMonthlyTrend(
   return { months: points };
 }
 
-/** SUM(signedAmount) — +in / -out — cast to int (mirrors fetchProfitLoss). */
-const signedNetFlow = sql<number>`coalesce(sum(case when ${transactions.direction} = 'in' then ${transactions.amount} else -${transactions.amount} end), 0)::int`;
+/** SUM(signedAmount) — +in / -out — bigint + mapWith(Number) (mirrors fetchProfitLoss). */
+const signedNetFlow = sql<number>`coalesce(sum(case when ${transactions.direction} = 'in' then ${transactions.amount} else -${transactions.amount} end), 0)::bigint`.mapWith(Number);
 
 const monthBucket = sql<string>`to_char(date_trunc('month', ${transactions.date}), 'YYYY-MM')`;
 

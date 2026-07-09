@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { auth } from "./auth";
 import { db } from "./db";
 import { bankAccounts, businessMembers } from "./db/schema";
@@ -47,6 +47,11 @@ export async function getActiveMembership(): Promise<{
   const data = await getCurrentSession();
   if (!data?.user) return null;
 
+  // Deterministic active membership: oldest join wins. A user can belong to
+  // more than one business (they accepted an invite), so LIMIT 1 without an
+  // ORDER BY would return a nondeterministic tenant/role per request — wrong-
+  // tenant writes and intermittent admin lockout. Stopgap until an explicit
+  // business switcher exists.
   const memberships = await db
     .select({
       businessId: businessMembers.businessId,
@@ -54,6 +59,7 @@ export async function getActiveMembership(): Promise<{
     })
     .from(businessMembers)
     .where(eq(businessMembers.userId, data.user.id))
+    .orderBy(asc(businessMembers.joinedAt), asc(businessMembers.businessId))
     .limit(1);
 
   const membership = memberships[0];

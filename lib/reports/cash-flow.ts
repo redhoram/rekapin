@@ -155,7 +155,7 @@ async function fetchPeriodFlows(
         categoryId: transactions.categoryId,
         categoryName: categories.name,
         direction: transactions.direction,
-        total: sql<number>`sum(${transactions.amount})::int`,
+        total: sql<number>`sum(${transactions.amount})::bigint`.mapWith(Number),
       })
       .from(transactions)
       .innerJoin(bankAccounts, eq(bankAccounts.id, transactions.bankAccountId))
@@ -180,7 +180,7 @@ async function fetchPeriodFlows(
       .select({
         accountId: transactions.bankAccountId,
         direction: transactions.direction,
-        total: sql<number>`sum(${transactions.amount})::int`,
+        total: sql<number>`sum(${transactions.amount})::bigint`.mapWith(Number),
       })
       .from(transactions)
       .innerJoin(bankAccounts, eq(bankAccounts.id, transactions.bankAccountId))

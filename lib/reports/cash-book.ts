@@ -63,7 +63,7 @@ async function preStartNetByAccount(
   const rows = await db
     .select({
       accountId: transactions.bankAccountId,
-      net: sql<number>`coalesce(sum(case when ${transactions.direction} = 'in' then ${transactions.amount} else -${transactions.amount} end), 0)::int`,
+      net: sql<number>`coalesce(sum(case when ${transactions.direction} = 'in' then ${transactions.amount} else -${transactions.amount} end), 0)::bigint`.mapWith(Number),
     })
     .from(transactions)
     .innerJoin(bankAccounts, eq(bankAccounts.id, transactions.bankAccountId))
@@ -211,7 +211,7 @@ export async function fetchCashBook(
     const rows = await db
       .select({
         ...ledgerSelection,
-        cumFlow: sql<number>`sum(case when ${transactions.direction} = 'in' then ${transactions.amount} else -${transactions.amount} end) over (order by ${transactions.date}, ${transactions.createdAt}, ${transactions.id} rows unbounded preceding)::int`,
+        cumFlow: sql<number>`sum(case when ${transactions.direction} = 'in' then ${transactions.amount} else -${transactions.amount} end) over (order by ${transactions.date}, ${transactions.createdAt}, ${transactions.id} rows unbounded preceding)::bigint`.mapWith(Number),
       })
       .from(transactions)
       .leftJoin(categories, eq(categories.id, transactions.categoryId))

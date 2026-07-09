@@ -377,8 +377,11 @@ export async function applyMapping(
     .where(and(eq(uploads.id, uploadId), eq(uploads.businessId, businessId)))
     .limit(1);
   if (!upload) return { status: "error", message: "Upload tidak ditemukan." };
-  if (upload.status === "committed") {
-    return { status: "error", message: "Upload ini sudah disimpan." };
+  // Only an in-progress upload may be (re)mapped. Reopening a committed, undone,
+  // or failed batch here would let commitUpload re-insert rows a prior undo
+  // deleted (undo is terminal) — resurrecting/double-booking a deleted batch.
+  if (upload.status !== "pending" && upload.status !== "parsed") {
+    return { status: "error", message: "Upload ini tidak bisa dipetakan ulang." };
   }
 
   const account = await loadOwnedAccount(businessId, bankAccountId);
