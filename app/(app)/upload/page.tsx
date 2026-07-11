@@ -10,18 +10,20 @@ import { UploadClient, type AccountOption } from "./_components/upload-client";
 export default async function UploadPage() {
   const { businessId, role } = await requireRole(["admin", "staff"]);
 
-  const accountRows = await db
-    .select({
-      id: bankAccounts.id,
-      bankCode: bankAccounts.bankCode,
-      label: bankAccounts.label,
-      accountMask: bankAccounts.accountMask,
-    })
-    .from(bankAccounts)
-    .where(eq(bankAccounts.businessId, businessId));
+  const [accountRows, initialHistory] = await Promise.all([
+    db
+      .select({
+        id: bankAccounts.id,
+        bankCode: bankAccounts.bankCode,
+        label: bankAccounts.label,
+        accountMask: bankAccounts.accountMask,
+      })
+      .from(bankAccounts)
+      .where(eq(bankAccounts.businessId, businessId)),
+    listUploads(),
+  ]);
 
   const accounts: AccountOption[] = accountRows;
-  const initialHistory = await listUploads();
 
   return (
     <UploadClient

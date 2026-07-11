@@ -182,12 +182,15 @@ export function resolveAmountAndDirection(
     return { ok: true, value: { amount: parsed.value, direction } };
   }
 
-  // debit_credit: exactly one of the two columns carries the value.
+  // debit_credit: exactly one of the two columns carries the value. Many bank
+  // exports use a bare "-" as the placeholder for "no value" in the unused
+  // column (same convention as an empty cell), so it must not be parsed as an
+  // amount.
   const debitRaw = (raw[mapping.debitColumn ?? ""] ?? "").trim();
   const creditRaw = (raw[mapping.creditColumn ?? ""] ?? "").trim();
 
-  const hasDebit = debitRaw !== "";
-  const hasCredit = creditRaw !== "";
+  const hasDebit = debitRaw !== "" && debitRaw !== "-";
+  const hasCredit = creditRaw !== "" && creditRaw !== "-";
   if (!hasDebit && !hasCredit) return { ok: false, reason: "Jumlah kosong" };
 
   let debitVal = 0;

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
@@ -10,14 +11,21 @@ import type { Role } from "./constants";
  * Central session/role helpers. This is the ONE enforcement point every
  * (app)/* layout/page and every server action must go through (FR-9.2, NFR-1).
  * Hiding UI is not protection — the DB-backed role check lives here.
+ *
+ * getCurrentSession/getActiveMembership are wrapped in React cache() so every
+ * call within the SAME request/render pass (layout + page + the several
+ * server actions a page awaits during render) shares one result instead of
+ * re-querying Neon per call — a single settings-page load previously ran the
+ * session+membership+bank-account chain 4 times (~12+ redundant HTTP round-
+ * trips at Neon's per-statement latency).
  */
 
 export type SessionData = Awaited<ReturnType<typeof auth.api.getSession>>;
 
 /** Wraps auth.api.getSession with the current request headers. */
-export async function getCurrentSession(): Promise<SessionData> {
+export const getCurrentSession = cache(async (): Promise<SessionData> => {
   return auth.api.getSession({ headers: await headers() });
-}
+});
 
 /**
  * Resolve the "active business" for the current user.
@@ -39,11 +47,11 @@ export async function getActiveBusinessId(): Promise<string | null> {
  * Combine session -> active business -> business_members row.
  * Returns null if there is no session or no membership.
  */
-export async function getActiveMembership(): Promise<{
+export const getActiveMembership = cache(async (): Promise<{
   userId: string;
   businessId: string;
   role: Role;
-} | null> {
+} | null> => {
   const data = await getCurrentSession();
   if (!data?.user) return null;
 
@@ -70,7 +78,7 @@ export async function getActiveMembership(): Promise<{
     businessId: membership.businessId,
     role: membership.role,
   };
-}
+});
 
 /**
  * Enforce that the current request has a session, a membership, a role in

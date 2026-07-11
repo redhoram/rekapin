@@ -464,24 +464,28 @@ export async function commitUpload(
     return { ok: false, error: "Upload belum siap disimpan." };
   }
 
+  // The three prep steps are mutually independent (none reads another's
+  // output) — run them in parallel rather than as three serial round-trips.
+  // Categories must exist for the post-import categorize UI (defensive; rule
+  // matching itself doesn't need them). Rule set fetched ONCE before the
+  // insert loop — never per-row (rules tables are small).
   let result: PipelineResult;
+  let activeRules: Awaited<ReturnType<typeof fetchActiveRulesForMatching>>;
   try {
-    result = await runAgainstStoredFile(
-      upload.blobUrl,
-      upload.originalName,
-      upload.columnMapping,
-      businessId,
-      targetAccountId,
-    );
+    [result, , activeRules] = await Promise.all([
+      runAgainstStoredFile(
+        upload.blobUrl,
+        upload.originalName,
+        upload.columnMapping,
+        businessId,
+        targetAccountId,
+      ),
+      ensureDefaultCategories(businessId),
+      fetchActiveRulesForMatching(businessId),
+    ]);
   } catch {
     return { ok: false, error: "Gagal membaca file. Coba unggah ulang." };
   }
-
-  // Categories must exist for the post-import categorize UI (defensive; rule
-  // matching itself doesn't need them). Fetch the active, non-archived-category
-  // rule set ONCE before the insert loop — never per-row (rules tables are small).
-  await ensureDefaultCategories(businessId);
-  const activeRules = await fetchActiveRulesForMatching(businessId);
 
   let insertedCount = 0;
   const CHUNK = 500;
@@ -518,28 +522,31 @@ export async function commitUpload(
     insertedCount += inserted.length;
   }
 
-  // A wizard-built mapping proved itself by reaching commit — NOW persist it to
-  // the account so future uploads skip the wizard (abandoned previews never do).
-  if (upload.mappingSource === "wizard") {
-    await db
-      .update(bankAccounts)
-      .set({ savedColumnMapping: upload.columnMapping })
-      .where(
-        and(eq(bankAccounts.id, targetAccountId), eq(bankAccounts.businessId, businessId)),
-      );
-  }
-
-  await db
-    .update(uploads)
-    .set({
-      status: "committed",
-      committedAt: new Date(),
-      bankAccountId: targetAccountId,
-      rowCount: result.rowCount,
-      skippedDupeCount: result.duplicateCount,
-      failedRowCount: result.failedCount,
-    })
-    .where(eq(uploads.id, uploadId));
+  // Independent writes to different tables — run in parallel.
+  await Promise.all([
+    // A wizard-built mapping proved itself by reaching commit — NOW persist it
+    // to the account so future uploads skip the wizard (abandoned previews
+    // never do).
+    upload.mappingSource === "wizard"
+      ? db
+          .update(bankAccounts)
+          .set({ savedColumnMapping: upload.columnMapping })
+          .where(
+            and(eq(bankAccounts.id, targetAccountId), eq(bankAccounts.businessId, businessId)),
+          )
+      : Promise.resolve(),
+    db
+      .update(uploads)
+      .set({
+        status: "committed",
+        committedAt: new Date(),
+        bankAccountId: targetAccountId,
+        rowCount: result.rowCount,
+        skippedDupeCount: result.duplicateCount,
+        failedRowCount: result.failedCount,
+      })
+      .where(eq(uploads.id, uploadId)),
+  ]);
 
   return { ok: true, insertedCount, bankLabel };
 }
@@ -605,35 +612,38 @@ export async function undoUpload(uploadId: string): Promise<UndoResult> {
 export async function listUploads(): Promise<ListUploadsResult> {
   const { userId, businessId, role } = await requireRole(["admin", "staff"]);
 
-  const rows = await db
-    .select({
-      id: uploads.id,
-      originalName: uploads.originalName,
-      status: uploads.status,
-      rowCount: uploads.rowCount,
-      createdAt: uploads.createdAt,
-      uploadedBy: uploads.uploadedBy,
-      bankAccountId: uploads.bankAccountId,
-      bankLabel: bankAccounts.label,
-      bankCode: bankAccounts.bankCode,
-      mappingSource: uploads.mappingSource,
-    })
-    .from(uploads)
-    .leftJoin(bankAccounts, eq(uploads.bankAccountId, bankAccounts.id))
-    .where(eq(uploads.businessId, businessId))
-    .orderBy(desc(uploads.createdAt))
-    .limit(25);
-
-  // Actual committed transaction counts + edited flags, per upload.
-  const countRows = await db
-    .select({
-      uploadId: transactions.uploadId,
-      total: sql<number>`count(*)::int`,
-      edited: sql<number>`count(*) filter (where ${transactions.editedManually})::int`,
-    })
-    .from(transactions)
-    .where(eq(transactions.businessId, businessId))
-    .groupBy(transactions.uploadId);
+  // Independent of each other — fetched in parallel (each is its own Neon
+  // HTTP round-trip).
+  const [rows, countRows] = await Promise.all([
+    db
+      .select({
+        id: uploads.id,
+        originalName: uploads.originalName,
+        status: uploads.status,
+        rowCount: uploads.rowCount,
+        createdAt: uploads.createdAt,
+        uploadedBy: uploads.uploadedBy,
+        bankAccountId: uploads.bankAccountId,
+        bankLabel: bankAccounts.label,
+        bankCode: bankAccounts.bankCode,
+        mappingSource: uploads.mappingSource,
+      })
+      .from(uploads)
+      .leftJoin(bankAccounts, eq(uploads.bankAccountId, bankAccounts.id))
+      .where(eq(uploads.businessId, businessId))
+      .orderBy(desc(uploads.createdAt))
+      .limit(25),
+    // Actual committed transaction counts + edited flags, per upload.
+    db
+      .select({
+        uploadId: transactions.uploadId,
+        total: sql<number>`count(*)::int`,
+        edited: sql<number>`count(*) filter (where ${transactions.editedManually})::int`,
+      })
+      .from(transactions)
+      .where(eq(transactions.businessId, businessId))
+      .groupBy(transactions.uploadId),
+  ]);
 
   const countMap = new Map<string, { total: number; edited: number }>();
   for (const c of countRows) {

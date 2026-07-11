@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { categories, categoryRules, user } from "@/lib/db/schema";
@@ -52,7 +52,8 @@ const prioritySchema = z
   .min(0, "Prioritas tidak boleh negatif.")
   .max(1_000_000, "Prioritas terlalu besar.");
 
-/** Confirm a category id belongs to this business (never trust the client). */
+/** Confirm a category id belongs to this business and isn't archived (never
+ * trust the client; archived categories are hidden from new assignments). */
 async function categoryInBusiness(
   businessId: string,
   categoryId: string,
@@ -60,7 +61,13 @@ async function categoryInBusiness(
   const rows = await db
     .select({ id: categories.id })
     .from(categories)
-    .where(and(eq(categories.id, categoryId), eq(categories.businessId, businessId)))
+    .where(
+      and(
+        eq(categories.id, categoryId),
+        eq(categories.businessId, businessId),
+        isNull(categories.archivedAt),
+      ),
+    )
     .limit(1);
   return rows.length > 0;
 }
@@ -255,8 +262,21 @@ export async function updateRule(
     patch.matchType = matchType.data;
   }
   if (input.categoryId !== undefined) {
-    if (!(await categoryInBusiness(businessId, input.categoryId))) {
-      return { ok: false, error: "Kategori tidak ditemukan." };
+    // Only re-validate when the category is actually changing — the edit
+    // dialog round-trips the rule's current categoryId even when just the
+    // pattern/priority changed, so re-checking an unchanged (possibly since-
+    // archived) category would block unrelated edits.
+    const [current] = await db
+      .select({ categoryId: categoryRules.categoryId })
+      .from(categoryRules)
+      .where(and(eq(categoryRules.id, id), eq(categoryRules.businessId, businessId)))
+      .limit(1);
+    if (!current) return { ok: false, error: "Rule tidak ditemukan." };
+
+    if (input.categoryId !== current.categoryId) {
+      if (!(await categoryInBusiness(businessId, input.categoryId))) {
+        return { ok: false, error: "Kategori tidak ditemukan." };
+      }
     }
     patch.categoryId = input.categoryId;
   }

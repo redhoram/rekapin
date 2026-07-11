@@ -275,14 +275,36 @@ export async function inviteMember(input: {
   return { ok: true };
 }
 
-/** Cancel a pending invitation (hard delete). admin only. */
+/**
+ * Cancel a PENDING invitation (hard delete). admin only. The WHERE excludes
+ * already-accepted invitations atomically — deleting one would falsely tell
+ * the admin access was denied while the membership it created still stands
+ * (use removeMember for that instead).
+ */
 export async function revokeInvitation(id: string): Promise<ActionResult> {
   const { businessId } = await requireRole(["admin"]);
   const deleted = await db
     .delete(invitations)
-    .where(and(eq(invitations.id, id), eq(invitations.businessId, businessId)))
+    .where(
+      and(
+        eq(invitations.id, id),
+        eq(invitations.businessId, businessId),
+        isNull(invitations.acceptedAt),
+      ),
+    )
     .returning({ id: invitations.id });
   if (deleted.length === 0) {
+    const [inv] = await db
+      .select({ acceptedAt: invitations.acceptedAt })
+      .from(invitations)
+      .where(and(eq(invitations.id, id), eq(invitations.businessId, businessId)))
+      .limit(1);
+    if (inv?.acceptedAt) {
+      return {
+        ok: false,
+        error: "Undangan ini sudah diterima — hapus anggotanya lewat daftar Anggota.",
+      };
+    }
     return { ok: false, error: "Undangan tidak ditemukan." };
   }
   return { ok: true };

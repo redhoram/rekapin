@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { bankAccounts, categories, transactions } from "@/lib/db/schema";
@@ -15,6 +15,8 @@ export type ActionResult = { ok: true } | { ok: false; error: string };
 /** Cap on a single bulk-categorize call (spec §server actions). */
 const BULK_CAP = 500;
 
+/** True for a non-archived category in this business — archived categories are
+ * hidden from new assignments (schema contract), never a valid target here. */
 async function categoryInBusiness(
   businessId: string,
   categoryId: string,
@@ -22,7 +24,13 @@ async function categoryInBusiness(
   const rows = await db
     .select({ id: categories.id })
     .from(categories)
-    .where(and(eq(categories.id, categoryId), eq(categories.businessId, businessId)))
+    .where(
+      and(
+        eq(categories.id, categoryId),
+        eq(categories.businessId, businessId),
+        isNull(categories.archivedAt),
+      ),
+    )
     .limit(1);
   return rows.length > 0;
 }
@@ -120,8 +128,18 @@ export async function bulkUpdateTransactionCategory(
   return { ok: true, count: updated.length };
 }
 
+/** True for a real calendar date, e.g. rejects "2026-02-31" (regex alone can't). */
+function isRealCalendarDate(iso: string): boolean {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+
 const manualSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pilih tanggal."),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Pilih tanggal.")
+    .refine(isRealCalendarDate, "Tanggal tidak valid."),
   description: z
     .string()
     .trim()
@@ -163,12 +181,15 @@ export async function createManualTransaction(input: {
     return { ok: false, error: parsed.error.errors[0].message };
   }
   const data = parsed.data;
-
-  if (!(await accountInBusiness(businessId, data.bankAccountId))) {
+  const categoryId = data.categoryId ?? null;
+  const [accountOk, categoryOk] = await Promise.all([
+    accountInBusiness(businessId, data.bankAccountId),
+    categoryId ? categoryInBusiness(businessId, categoryId) : true,
+  ]);
+  if (!accountOk) {
     return { ok: false, error: "Rekening tidak ditemukan." };
   }
-  const categoryId = data.categoryId ?? null;
-  if (categoryId && !(await categoryInBusiness(businessId, categoryId))) {
+  if (categoryId && !categoryOk) {
     return { ok: false, error: "Kategori tidak ditemukan." };
   }
 
@@ -248,12 +269,20 @@ export async function updateManualTransaction(
     return { ok: false, error: parsed.error.errors[0].message };
   }
   const data = parsed.data;
-
-  if (!(await accountInBusiness(businessId, data.bankAccountId))) {
+  const categoryId = data.categoryId ?? null;
+  // Only re-validate the category when it's actually changing — the edit form
+  // round-trips the transaction's current categoryId even when the user only
+  // touched another field, so re-checking an unchanged (possibly since-
+  // archived) category would block edits unrelated to categorization.
+  const categoryChanged = categoryId !== existing.categoryId;
+  const [accountOk, categoryOk] = await Promise.all([
+    accountInBusiness(businessId, data.bankAccountId),
+    categoryId && categoryChanged ? categoryInBusiness(businessId, categoryId) : true,
+  ]);
+  if (!accountOk) {
     return { ok: false, error: "Rekening tidak ditemukan." };
   }
-  const categoryId = data.categoryId ?? null;
-  if (categoryId && !(await categoryInBusiness(businessId, categoryId))) {
+  if (categoryId && categoryChanged && !categoryOk) {
     return { ok: false, error: "Kategori tidak ditemukan." };
   }
 
