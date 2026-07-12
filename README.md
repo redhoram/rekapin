@@ -4,6 +4,7 @@
   <img src="https://img.shields.io/badge/Neon-Postgres-00E599?logo=postgresql&logoColor=white" alt="Neon Postgres">
   <img src="https://img.shields.io/badge/Built%20with-Claude%20Code-D97757" alt="Built with Claude Code">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg" alt="License: AGPL v3"></a>
+  <a href="https://github.com/redhoram/rekapin/actions/workflows/ci.yml"><img src="https://github.com/redhoram/rekapin/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
 <p align="center">
@@ -37,7 +38,7 @@ Post-MVP hardening done alongside step ⑥: dependency security upgrades (better
 
 ### How It Works
 
-1. **Upload** — bank statement CSV/Excel (BCA, Mandiri, BRI, BNI presets) or the standard Excel template
+1. **Upload** — bank statement CSV/Excel (BCA preset; other banks via the column-mapping wizard, saved per account) or the standard Excel template
 2. **Map once** — column mapping wizard, saved per bank account
 3. **Review** — auto-categorization via rules engine (AI-powered in Phase 2), guaranteed deduplication
 4. **Done** — reports and margin dashboard update instantly, export to Excel
@@ -45,7 +46,7 @@ Post-MVP hardening done alongside step ⑥: dependency security upgrades (better
 ### Features (MVP)
 
 - Multi-business support with strict data isolation
-- Bank statement import with per-bank presets + universal mapping wizard
+- Bank statement import: BCA preset + universal mapping wizard (more bank presets planned)
 - Duplicate-proof: re-uploading the same file never doubles a transaction
 - Rules-based auto-categorization that learns from your corrections
 - Reports: Profit & Loss, Cash Flow, Cash Book — period comparison, Excel export

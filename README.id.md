@@ -4,6 +4,7 @@
   <img src="https://img.shields.io/badge/Neon-Postgres-00E599?logo=postgresql&logoColor=white" alt="Neon Postgres">
   <img src="https://img.shields.io/badge/Built%20with-Claude%20Code-D97757" alt="Built with Claude Code">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg" alt="License: AGPL v3"></a>
+  <a href="https://github.com/redhoram/rekapin/actions/workflows/ci.yml"><img src="https://github.com/redhoram/rekapin/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
 <p align="center">
@@ -37,7 +38,7 @@ Hardening pasca-MVP yang ikut dikerjakan pas langkah ⑥: upgrade keamanan depen
 
 ### Cara Kerja
 
-1. **Upload** — mutasi CSV/Excel (preset BCA, Mandiri, BRI, BNI) atau template Excel standar
+1. **Upload** — mutasi CSV/Excel (preset BCA; bank lain lewat wizard pemetaan kolom, tersimpan per rekening) atau template Excel standar
 2. **Mapping sekali** — wizard pemetaan kolom, tersimpan per rekening
 3. **Review** — kategorisasi otomatis via rules engine (ber-AI di Fase 2), bebas duplikat
 4. **Selesai** — laporan & dashboard margin langsung ter-update, export ke Excel
@@ -45,7 +46,7 @@ Hardening pasca-MVP yang ikut dikerjakan pas langkah ⑥: upgrade keamanan depen
 ### Fitur (MVP)
 
 - Multi-bisnis dengan isolasi data ketat
-- Import mutasi bank: preset per bank + wizard mapping universal
+- Import mutasi bank: preset BCA + wizard mapping universal (preset bank lain menyusul)
 - Anti-dobel: upload ulang file yang sama tidak pernah menggandakan transaksi
 - Kategorisasi otomatis berbasis rules yang belajar dari koreksimu
 - Laporan: Laba Rugi, Arus Kas, Buku Kas — banding periode, export Excel
