@@ -17,8 +17,13 @@ jobs:
           node-version: 22
           cache: npm
 
+      # `npm install`, not `npm ci`: the `overrides` field (security pins for
+      # transitive esbuild/postcss) makes npm mark vitest's platform-specific
+      # esbuild binaries "extraneous" in lockfiles generated on Windows — a
+      # known npm bug that breaks `npm ci` on Linux. Versions still resolve
+      # from the committed lockfile.
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Type check
         run: npx tsc --noEmit
